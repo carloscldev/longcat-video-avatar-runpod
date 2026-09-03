@@ -24,7 +24,10 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # Built after torch is already in place -- flash-attn's setup.py needs a
 # working torch import to compile against, and it's the slow step so it
 # gets its own layer, cached separately from the rest of the deps above.
+# --no-build-isolation runs setup.py in this environment rather than an
+# isolated one, so it needs setuptools/pkg_resources and ninja here itself.
 RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install setuptools wheel ninja && \
     MAX_JOBS=4 pip install flash-attn==2.7.4.post1 --no-build-isolation
 
 # The upstream repo, for its pipeline/module code -- not the weights,
