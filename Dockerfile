@@ -12,13 +12,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # torch pinned to what LongCat-Video's requirements.txt expects, from the
-# cu124 wheel index so it matches the cuda12.4 base image.
+# cu124 wheel index so it matches the cuda12.4 base image. Set globally
+# (not just for this one install) because an unpinned transitive
+# dependency further down otherwise pulls a newer torch from plain PyPI --
+# whatever CUDA build happens to be default there today -- and silently
+# replaces this one, which is what broke flash-attn's build.
+ENV PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/cu124
 RUN python -m pip install --upgrade pip && \
     pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
 
 COPY requirements.txt requirements_avatar.txt ./
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -r requirements.txt -r requirements_avatar.txt && \
+    pip install torch==2.6.0 -r requirements.txt -r requirements_avatar.txt && \
     pip install runpod
 
 # Built after torch is already in place -- flash-attn's setup.py needs a
